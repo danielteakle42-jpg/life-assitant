@@ -12,11 +12,25 @@ export default function ConnectionsTab(){
   async function disconnect(provider:string){await fetch('/api/integrations/disconnect',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({provider})});setDrive([]);setLarkCalendars([]);setMsg(`${provider} disconnected`);load()}
   async function connectDiscord(){setMsg('');const r=await fetch('/api/integrations/discord',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({webhook_url:discordUrl})});const j=await r.json();setMsg(r.ok?'Discord connected and test message sent.':j.error||'Discord connection failed');if(r.ok){setDiscordUrl('');load()}}
   async function enablePush(){
+    setMsg('')
     if(!('Notification' in window)){setMsg('Notifications are not supported in this browser.');return}
-    if('serviceWorker' in navigator) await navigator.serviceWorker.register('/sw.js')
-    const permission=await Notification.requestPermission()
-    await fetch('/api/integrations/push',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({permission})})
-    setMsg(permission==='granted'?'Notifications enabled on this browser.':'Notification permission was not granted.');load()
+    try{
+      if('serviceWorker' in navigator) await navigator.serviceWorker.register('/sw.js')
+      const permission=await Notification.requestPermission()
+      await fetch('/api/integrations/push',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({permission})})
+      if(permission!=='granted'){setMsg('Notification permission was not granted.');load();return}
+      const reg=await navigator.serviceWorker.ready
+      await reg.showNotification('Platinum Assistant',{body:'Notifications are working on this device.',tag:'platinum-test',renotify:true})
+      setMsg('Notifications enabled — test notification sent.')
+      load()
+    }catch(error:any){setMsg(error?.message||'Could not enable notifications.')}
+  }
+  async function testPush(){
+    try{
+      const reg=await navigator.serviceWorker.ready
+      await reg.showNotification('Platinum Assistant',{body:'Test notification — your browser alerts are working.',tag:'platinum-test',renotify:true})
+      setMsg('Test notification sent.')
+    }catch(error:any){setMsg(error?.message||'Test notification failed.')}
   }
   async function loadDrive(){const r=await fetch('/api/integrations/google/drive',{cache:'no-store'});const j=await r.json();setMsg(r.ok?'':j.error||'Drive failed');setDrive(j.files||[])}
   async function loadLark(){const r=await fetch('/api/integrations/lark/calendar',{cache:'no-store'});const j=await r.json();setMsg(r.ok?'':j.error||'Lark failed');setLarkCalendars(j.calendars||[])}
@@ -34,7 +48,9 @@ export default function ConnectionsTab(){
         {map.lark?.status==='connected'&&<button className="btn secondary" onClick={loadLark}><CalendarDays size={16}/> Check calendars</button>}
       </Card>
       <div className="card connectionCard"><div className="row between"><div className="row"><div className="hubIcon"><MessageCircle/></div><div><h3>Discord</h3><p className="muted">{map.discord?.status==='connected'?(map.discord.account_label||'Connected'):'Use a channel webhook for reminders and assistant messages.'}</p></div></div><span className="tag">{map.discord?.status==='connected'?'Connected':'Not connected'}</span></div>{map.discord?.status==='connected'?<div className="connectionActions"><button className="btn secondary" onClick={()=>disconnect('discord')}><Unplug size={16}/> Disconnect</button></div>:<div className="stack"><input className="input" value={discordUrl} onChange={e=>setDiscordUrl(e.target.value)} placeholder="Discord webhook URL"/><button className="btn" onClick={connectDiscord}><Link2 size={16}/> Connect & test</button></div>}</div>
-      <Card icon={<Bell/>} title="Phone / browser alerts" provider="push" description="Enable meeting and reminder notifications on this browser." connect={enablePush}/>
+      <Card icon={<Bell/>} title="Phone / browser alerts" provider="push" description="Enable meeting and reminder notifications on this browser." connect={enablePush}>
+        {map.push?.status==='connected'&&<button className="btn secondary" onClick={testPush}><Bell size={16}/> Test notification</button>}
+      </Card>
     </div>}
     {!!drive.length&&<div className="card connectionResult"><div className="row between"><h3>Google Drive</h3><span className="tag">{drive.length} recent files</span></div><div className="miniList">{drive.slice(0,12).map(f=><div key={f.id}><span><b>{f.name}</b><small>{f.mimeType}</small></span>{f.webViewLink&&<a href={f.webViewLink} target="_blank">Open</a>}</div>)}</div></div>}
     {!!larkCalendars.length&&<div className="card connectionResult"><div className="row between"><h3>Lark calendars</h3><span className="tag">{larkCalendars.length}</span></div><div className="miniList">{larkCalendars.slice(0,12).map((c:any,i)=><div key={c.calendar_id||i}><span><b>{c.summary||c.name||'Calendar'}</b><small>{c.description||c.type||''}</small></span></div>)}</div></div>}
