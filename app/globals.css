@@ -7,3 +7,33 @@
 @media(max-width:900px){.projectActions{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:520px){.projectActions{grid-template-columns:repeat(2,1fr)}.projectHero{flex-direction:column}}
 .connectionCard{min-height:210px}.connectionActions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.connectedTag{border-color:rgba(75,220,140,.35)}.connectionResult{margin-top:18px}.connectionCard .stack{margin-top:18px}
+
+/* Calm, low-friction layout */
+.calmHero{padding:20px 22px}
+.calmHero h2{font-size:24px;letter-spacing:-.4px}
+.calmMain{align-items:start}
+.quickCard h3,.nextCard h3{margin-bottom:12px}
+.compactText{margin:4px 0 12px;font-size:13px}
+.focusList{margin-top:14px}
+.simpleHeader{margin-bottom:12px}
+.collapsedCard{margin-top:14px;padding:0;overflow:hidden}
+.collapsedCard summary{cursor:pointer;padding:16px 18px;font-weight:800;list-style:none}
+.collapsedCard summary::-webkit-details-marker{display:none}
+.completedStack{padding:0 18px 18px}
+.moreGroups{display:grid;gap:18px;max-width:760px}
+.moreGroup h3{margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:1.3px;color:var(--muted)}
+.simpleMenu{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:#0d111b}
+.simpleMenu button{display:grid;grid-template-columns:42px 1fr auto;align-items:center;gap:12px;width:100%;padding:13px 14px;border:0;border-bottom:1px solid var(--line);background:transparent;color:#fff;text-align:left;cursor:pointer}
+.simpleMenu button:last-child{border-bottom:0}
+.simpleMenu button:hover{background:#141a28}
+.simpleMenu .workspaceIcon{width:34px;height:34px;flex-basis:34px;border-radius:10px}
+.menuArrow{font-size:24px;color:var(--muted);line-height:1}
+@media(max-width:800px){
+  .wrap{max-width:760px}
+  .top{margin-bottom:12px}
+  .brand p{display:none}
+  .calmHero{padding:17px}
+  .calmHero h2{font-size:21px}
+  .commandBar{margin-bottom:12px}
+  .card{box-shadow:0 8px 26px #0004}
+}
