@@ -29,7 +29,7 @@ export default function Page(){
   const [tasks,setTasks]=useState<Task[]>([]),[meetings,setMeetings]=useState<Meeting[]>([]),[notes,setNotes]=useState<Note[]>([]),[projects,setProjects]=useState<Project[]>([])
   const [recruits,setRecruits]=useState<Recruit[]>([]),[trends,setTrends]=useState<Trend[]>([]),[contacts,setContacts]=useState<ContactRow[]>([]),[files,setFiles]=useState<FileRow[]>([])
   const [drafts,setDrafts]=useState<Draft[]>([]),[reminders,setReminders]=useState<Reminder[]>([])
-  const [quick,setQuick]=useState(''),[modal,setModal]=useState<string|null>(null),[form,setForm]=useState<any>({}),[query,setQuery]=useState(''),[toast,setToast]=useState('')
+  const [quick,setQuick]=useState(''),[modal,setModal]=useState<string|null>(null),[form,setForm]=useState<any>({}),[query,setQuery]=useState(''),[toast,setToast]=useState(''),[quickMenu,setQuickMenu]=useState(false)
   const [selectedProjectId,setSelectedProjectId]=useState<string|null>(null)
 
   useEffect(()=>{
@@ -152,7 +152,8 @@ export default function Page(){
       {tab==='home'&&<><div className="commandBar"><Search size={18}/><input value={query} onChange={e=>setQuery(e.target.value)} onKeyDown={e=>e.key==='Enter'&&runCommand()} placeholder="Search or quickly add something…"/><button onClick={runCommand}>Go</button></div>
       {query&&searchResults.length>0&&<div className="searchDrop">{searchResults.slice(0,6).map((r,i)=><button key={i} onClick={()=>setModal('search')}><span className="searchType">{r.type}</span><b>{r.title}</b><small>{r.meta}</small></button>)}</div>}</>}
 
-      {tab==='home'&&<HomeTab openTasks={openTasks} todayMeetings={todayMeetings} projects={projects} recruits={recruits} priorityTasks={priorityTasks} next={next} overdue={overdue} quick={quick} setQuick={setQuick} addQuick={addQuick} setModal={setModal} />}
+      {tab==='home'&&<HomeTab openTasks={openTasks} todayMeetings={todayMeetings} projects={projects} recruits={recruits} priorityTasks={priorityTasks} next={next} overdue={overdue} quick={quick} setQuick={setQuick} addQuick={addQuick} setModal={setModal} go={go} />}
+      {tab==='inbox'&&<SmartInbox tasks={tasks} meetings={meetings} reminders={reminders} recruits={recruits} drafts={drafts} go={go} toggleTask={toggleTask} setStage={setStage}/>}
       {tab==='calendar'&&<CalendarTab meetings={meetings} reminders={reminders} setModal={setModal} deleteRow={deleteRow}/>} 
       {tab==='tasks'&&<TasksTab tasks={tasks} projects={projects} notes={notes} toggleTask={toggleTask} setModal={setModal} setForm={setForm} deleteRow={deleteRow} openProject={(id:string)=>{setSelectedProjectId(id);setTab('project')}}/>} 
       {tab==='mail'&&<MailTab drafts={drafts} setModal={setModal} deleteRow={deleteRow} loadAll={loadAll}/>} 
@@ -170,6 +171,17 @@ export default function Page(){
       {tab==='project'&&selectedProjectId&&<ProjectTab project={projects.find(p=>p.id===selectedProjectId)} tasks={tasks} meetings={meetings} notes={notes} contacts={contacts} files={files} trends={trends} setModal={setModal} setForm={setForm} deleteRow={deleteRow} toggleTask={toggleTask} back={()=>{setTab('projects');setSelectedProjectId(null)}}/>}
     </main>
 
+    <div className="quickFabWrap">
+      {quickMenu&&<div className="quickFabMenu">
+        <button onClick={()=>{setModal('task');setQuickMenu(false)}}><CheckSquare size={17}/> Task</button>
+        <button onClick={()=>{setModal('reminder');setQuickMenu(false)}}><Bell size={17}/> Reminder</button>
+        <button onClick={()=>{setModal('note');setQuickMenu(false)}}><StickyNote size={17}/> Note</button>
+        <button onClick={()=>{setModal('meeting');setQuickMenu(false)}}><CalendarDays size={17}/> Meeting</button>
+        <button onClick={()=>{setModal('recruit');setQuickMenu(false)}}><Users size={17}/> Recruit</button>
+      </div>}
+      <button className={'quickFab '+(quickMenu?'open':'')} onClick={()=>setQuickMenu(!quickMenu)} aria-label="Quick add"><Plus size={24}/></button>
+    </div>
+
     <nav className="nav">
       <Nav active={tab==='home'} label="Home" icon={<Home size={19}/>} on={()=>go('home')}/>
       <Nav active={tab==='calendar'} label="Calendar" icon={<CalendarDays size={19}/>} on={()=>go('calendar')}/>
@@ -182,10 +194,29 @@ export default function Page(){
   </>
 }
 
-function HomeTab({openTasks,todayMeetings,projects,recruits,priorityTasks,next,overdue,quick,setQuick,addQuick,setModal}:any){
+function SmartInbox({tasks,meetings,reminders,recruits,drafts,go,toggleTask,setStage}:any){
+  const now=Date.now(), soon=now+24*60*60*1000
+  const overdueTasks=tasks.filter((t:Task)=>t.status!=='done'&&t.due_at&&new Date(t.due_at).getTime()<now)
+  const dueReminders=reminders.filter((r:Reminder)=>!r.sent_at&&new Date(r.remind_at).getTime()<=soon)
+  const followUps=recruits.filter((r:Recruit)=>r.next_follow_up&&new Date(r.next_follow_up).getTime()<=soon&&r.stage!=='onboarded'&&r.stage!=='not_interested')
+  const upcoming=meetings.filter((m:Meeting)=>{const t=new Date(m.starts_at).getTime();return t>=now&&t<=soon})
+  const unsent=drafts.filter((d:Draft)=>d.status!=='sent')
+  const total=overdueTasks.length+dueReminders.length+followUps.length+upcoming.length+unsent.length
+  return <Section title="Smart Inbox" actions={<span className="tag">{total} need attention</span>}>
+    {total===0?<div className="card"><Empty text="Nothing needs your attention right now."/></div>:<div className="stack inboxStack">
+      {overdueTasks.length>0&&<div className="card inboxCard"><div className="row between"><div><h3>Overdue tasks</h3><p className="muted compactText">{overdueTasks.length} need finishing</p></div><button className="btn secondary" onClick={()=>go('tasks')}>View all</button></div><div className="stack">{overdueTasks.slice(0,4).map((t:Task)=><div className="listRow" key={t.id}><div className="grow"><b>{t.title}</b><div className="muted">Due {new Date(t.due_at!).toLocaleString()}</div></div><button className="btn secondary" onClick={()=>toggleTask(t)}>Done</button></div>)}</div></div>}
+      {dueReminders.length>0&&<div className="card inboxCard"><div className="row between"><div><h3>Reminders</h3><p className="muted compactText">Coming up in the next 24 hours</p></div><button className="btn secondary" onClick={()=>go('reminders')}>View</button></div><div className="stack">{dueReminders.slice(0,4).map((r:Reminder)=><div className="listRow" key={r.id}><Bell size={17}/><div className="grow"><b>{r.title}</b><div className="muted">{new Date(r.remind_at).toLocaleString()}</div></div></div>)}</div></div>}
+      {followUps.length>0&&<div className="card inboxCard"><div className="row between"><div><h3>Recruitment follow-ups</h3><p className="muted compactText">People you need to get back to</p></div><button className="btn secondary" onClick={()=>go('recruitment')}>Open</button></div><div className="stack">{followUps.slice(0,4).map((r:Recruit)=><div className="listRow" key={r.id}><div className="grow"><b>{r.name}</b><div className="muted">{r.handle||''} · {new Date(r.next_follow_up!).toLocaleString()}</div></div><button className="btn secondary" onClick={()=>setStage(r,'contacted')}>Contacted</button></div>)}</div></div>}
+      {upcoming.length>0&&<div className="card inboxCard"><div className="row between"><div><h3>Upcoming meetings</h3><p className="muted compactText">Next 24 hours</p></div><button className="btn secondary" onClick={()=>go('calendar')}>Calendar</button></div><div className="stack">{upcoming.slice(0,4).map((m:Meeting)=><div className="listRow" key={m.id}><div className="grow"><b>{m.title}</b><div className="muted">{new Date(m.starts_at).toLocaleString()}</div></div>{m.join_url&&<a href={m.join_url} target="_blank">Join</a>}</div>)}</div></div>}
+      {unsent.length>0&&<div className="card inboxCard"><div className="row between"><div><h3>Email drafts</h3><p className="muted compactText">{unsent.length} waiting to send</p></div><button className="btn secondary" onClick={()=>go('mail')}>Mail</button></div><div className="stack">{unsent.slice(0,3).map((d:Draft)=><div className="listRow" key={d.id}><Mail size={17}/><div className="grow"><b>{d.subject||'(No subject)'}</b><div className="muted">To {d.recipient}</div></div></div>)}</div></div>}
+    </div>}
+  </Section>
+}
+
+function HomeTab({openTasks,todayMeetings,projects,recruits,priorityTasks,next,overdue,quick,setQuick,addQuick,setModal,go}:any){
   const focus=priorityTasks.slice(0,3)
   return <>
-    <section className="brief card calmHero"><div><span className="eyebrow">TODAY</span><h2>{overdue.length?overdue.length+' overdue item'+(overdue.length===1?'':'s'):'You’re up to date'}</h2><p className="muted">{todayMeetings.length} meeting{todayMeetings.length===1?'':'s'} today · {openTasks.length} open task{openTasks.length===1?'':'s'}</p></div></section>
+    <section className="brief card calmHero"><div><span className="eyebrow">TODAY</span><h2>{overdue.length?overdue.length+' overdue item'+(overdue.length===1?'':'s'):'You’re up to date'}</h2><p className="muted">{todayMeetings.length} meeting{todayMeetings.length===1?'':'s'} today · {openTasks.length} open task{openTasks.length===1?'':'s'}</p></div><button className="btn secondary" onClick={()=>go('inbox')}><Bell size={16}/> Smart Inbox</button></section>
     <section className="grid main calmMain">
       <div className="stack">
         <div className="card quickCard"><h3>Quick add</h3><div className="quick"><input className="input" placeholder="What do you need to do?" value={quick} onChange={e=>setQuick(e.target.value)} onKeyDown={e=>e.key==='Enter'&&addQuick()}/><button className="btn" onClick={addQuick}><Plus size={18}/></button></div></div>
