@@ -37,3 +37,17 @@
   .commandBar{margin-bottom:12px}
   .card{box-shadow:0 8px 26px #0004}
 }
+
+/* Smart Inbox + universal quick add */
+.inboxStack{max-width:840px}
+.inboxCard h3{margin:0}
+.quickFabWrap{position:fixed;right:max(18px,calc((100vw - 1240px)/2 + 18px));bottom:104px;z-index:35;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+.quickFab{width:56px;height:56px;border-radius:18px;border:1px solid #5c67a8;background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;display:grid;place-items:center;box-shadow:0 16px 42px #0008;cursor:pointer;transition:.18s ease}
+.quickFab.open{transform:rotate(45deg)}
+.quickFabMenu{display:flex;flex-direction:column;gap:7px;padding:8px;border:1px solid var(--line);background:#0b0f18f5;border-radius:16px;box-shadow:0 18px 55px #000a;backdrop-filter:blur(18px)}
+.quickFabMenu button{min-width:145px;border:0;border-radius:11px;background:#151b29;color:#fff;padding:10px 12px;display:flex;align-items:center;gap:9px;text-align:left;cursor:pointer}
+.quickFabMenu button:hover{background:#202741}
+@media(max-width:800px){
+  .quickFabWrap{right:16px;bottom:92px}
+  .quickFab{width:52px;height:52px;border-radius:16px}
+}
