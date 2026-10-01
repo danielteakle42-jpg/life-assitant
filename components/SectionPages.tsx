@@ -66,10 +66,10 @@ export function SettingsPage({go}:any){
 }
 
 export function MorePage({go}:any){
-  const items:any[]=[
-    ['mail','Mail',<Mail size={19}/>],['recruitment','Recruitment',<Users size={19}/>],['trends','Trends & ideas',<TrendingUp size={19}/>],['contacts','Contacts',<Contact size={19}/>],
-    ['files','Files',<FileText size={19}/>],['notes','Notes',<StickyNote size={19}/>],['reminders','Reminders',<Bell size={19}/>],['discord','Discord',<MessageCircle size={19}/>],
-    ['connections','Connections',<Link2 size={19}/>],['settings','Settings',<Target size={19}/>]
+  const groups:any[]=[
+    {title:'Work',items:[['mail','Mail',<Mail size={19}/>],['recruitment','Recruitment',<Users size={19}/>],['trends','Ideas',<TrendingUp size={19}/>]]},
+    {title:'Organise',items:[['notes','Notes',<StickyNote size={19}/>],['contacts','Contacts',<Contact size={19}/>],['files','Files',<FileText size={19}/>],['reminders','Reminders',<Bell size={19}/>]]},
+    {title:'Connect',items:[['discord','Discord',<MessageCircle size={19}/>],['connections','Connections',<Link2 size={19}/>],['settings','Settings',<Target size={19}/>]]}
   ]
-  return <Section title="More"><div className="workspaceGrid">{items.map(([id,label,icon])=><button className="workspace" key={id} onClick={()=>go(id)}><div className="workspaceIcon">{icon}</div><div><b>{label}</b><p>Open {String(label).toLowerCase()}.</p></div></button>)}</div></Section>
+  return <Section title="More"><div className="moreGroups">{groups.map((g:any)=><div className="moreGroup" key={g.title}><h3>{g.title}</h3><div className="simpleMenu">{g.items.map(([id,label,icon]:any)=><button key={id} onClick={()=>go(id)}><span className="workspaceIcon">{icon}</span><b>{label}</b><span className="menuArrow">›</span></button>)}</div></div>)}</div></Section>
 }
