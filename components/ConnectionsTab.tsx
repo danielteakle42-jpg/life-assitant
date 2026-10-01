@@ -5,12 +5,25 @@ import { Bell, CalendarDays, CheckCircle2, Cloud, Link2, Mail, MessageCircle, Re
 type Integration={provider:string;status:string;account_label?:string|null;scopes?:string[];metadata?:any;updated_at?:string}
 
 export default function ConnectionsTab(){
-  const [items,setItems]=useState<Integration[]>([]),[loading,setLoading]=useState(true),[msg,setMsg]=useState(''),[discordUrl,setDiscordUrl]=useState(''),[drive,setDrive]=useState<any[]>([]),[larkCalendars,setLarkCalendars]=useState<any[]>([])
+  const [items,setItems]=useState<Integration[]>([]),[loading,setLoading]=useState(true),[msg,setMsg]=useState(''),[discordUrl,setDiscordUrl]=useState(''),[discordMessage,setDiscordMessage]=useState(''),[sendingDiscord,setSendingDiscord]=useState(false),[drive,setDrive]=useState<any[]>([]),[larkCalendars,setLarkCalendars]=useState<any[]>([])
   const map=useMemo(()=>Object.fromEntries(items.map(x=>[x.provider,x])),[items])
   async function load(){setLoading(true);const r=await fetch('/api/integrations/status',{cache:'no-store'});const j=await r.json();setItems(j.integrations||[]);setLoading(false)}
   useEffect(()=>{load()},[])
   async function disconnect(provider:string){await fetch('/api/integrations/disconnect',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({provider})});setDrive([]);setLarkCalendars([]);setMsg(`${provider} disconnected`);load()}
-  async function connectDiscord(){setMsg('');const r=await fetch('/api/integrations/discord',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({webhook_url:discordUrl})});const j=await r.json();setMsg(r.ok?'Discord connected and test message sent.':j.error||'Discord connection failed');if(r.ok){setDiscordUrl('');load()}}
+  async function connectDiscord(){setMsg('');const r=await fetch('/api/integrations/discord',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({webhook_url:discordUrl,label:'Platinum Assistant'})});const j=await r.json();setMsg(r.ok?'Discord connected and test message sent.':j.error||'Discord connection failed');if(r.ok){setDiscordUrl('');load()}}
+  async function sendDiscordAnnouncement(){
+    const message=discordMessage.trim()
+    if(!message){setMsg('Write an announcement first.');return}
+    setSendingDiscord(true);setMsg('')
+    try{
+      const r=await fetch('/api/integrations/discord',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({message})})
+      const j=await r.json()
+      if(!r.ok) throw new Error(j.error||'Discord message failed')
+      setDiscordMessage('')
+      setMsg('Announcement posted to Discord.')
+    }catch(error:any){setMsg(error?.message||'Discord message failed')}
+    finally{setSendingDiscord(false)}
+  }
   async function enablePush(){
     setMsg('')
     if(!('Notification' in window)){setMsg('Notifications are not supported in this browser.');return}
@@ -47,7 +60,7 @@ export default function ConnectionsTab(){
       <Card icon={<CalendarDays/>} title="Lark" provider="lark" description="Connect your own Lark identity and calendars." connect={()=>window.location.href='/api/integrations/lark/connect'}>
         {map.lark?.status==='connected'&&<button className="btn secondary" onClick={loadLark}><CalendarDays size={16}/> Check calendars</button>}
       </Card>
-      <div className="card connectionCard"><div className="row between"><div className="row"><div className="hubIcon"><MessageCircle/></div><div><h3>Discord</h3><p className="muted">{map.discord?.status==='connected'?(map.discord.account_label||'Connected'):'Use a channel webhook for reminders and assistant messages.'}</p></div></div><span className="tag">{map.discord?.status==='connected'?'Connected':'Not connected'}</span></div>{map.discord?.status==='connected'?<div className="connectionActions"><button className="btn secondary" onClick={()=>disconnect('discord')}><Unplug size={16}/> Disconnect</button></div>:<div className="stack"><input className="input" value={discordUrl} onChange={e=>setDiscordUrl(e.target.value)} placeholder="Discord webhook URL"/><button className="btn" onClick={connectDiscord}><Link2 size={16}/> Connect & test</button></div>}</div>
+      <div className="card connectionCard"><div className="row between"><div className="row"><div className="hubIcon"><MessageCircle/></div><div><h3>Discord</h3><p className="muted">{map.discord?.status==='connected'?(map.discord.account_label||'Connected'):'Connect a Discord channel webhook, then post announcements straight from the assistant.'}</p></div></div><span className={'tag '+(map.discord?.status==='connected'?'connectedTag':'')}>{map.discord?.status==='connected'?'Connected':'Not connected'}</span></div>{map.discord?.status==='connected'?<div className="stack"><textarea className="textarea" value={discordMessage} onChange={e=>setDiscordMessage(e.target.value)} placeholder="Type an announcement to post in Discord…" maxLength={1900}/><div className="connectionActions"><button className="btn" onClick={sendDiscordAnnouncement} disabled={sendingDiscord||!discordMessage.trim()}><MessageCircle size={16}/> {sendingDiscord?'Posting…':'Post to Discord'}</button><button className="btn secondary" onClick={()=>disconnect('discord')}><Unplug size={16}/> Disconnect</button></div><small className="muted">{discordMessage.length}/1900 characters</small></div>:<div className="stack"><input className="input" value={discordUrl} onChange={e=>setDiscordUrl(e.target.value)} placeholder="Discord webhook URL"/><button className="btn" onClick={connectDiscord}><Link2 size={16}/> Connect & test</button></div>}</div>
       <Card icon={<Bell/>} title="Phone / browser alerts" provider="push" description="Enable meeting and reminder notifications on this browser." connect={enablePush}>
         {map.push?.status==='connected'&&<button className="btn secondary" onClick={testPush}><Bell size={16}/> Test notification</button>}
       </Card>
