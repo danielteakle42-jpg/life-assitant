@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import ConnectionsTab from '../components/ConnectionsTab'
+import { ProjectsPage, RecruitmentPage, TrendsPage, ContactsPage, FilesPage, NotesPage, RemindersPage, DiscordPage, SettingsPage, MorePage } from '../components/SectionPages'
 import {
   Bell, CalendarDays, CheckSquare, FileText, FolderKanban, Home, LogOut,
   Mail, Menu, Plus, Search, Shirt, StickyNote, Target, TrendingUp, Users,
@@ -23,7 +24,8 @@ type Reminder={id:string;title:string;remind_at:string;channel:string;sent_at:st
 
 const db=supabase()
 export default function Page(){
-  const [session,setSession]=useState<any>(null),[loading,setLoading]=useState(true),[tab,setTab]=useState('home')
+  const initialTab=typeof window!=='undefined'?(window.location.pathname.split('/')[1]||'home'):'home'
+  const [session,setSession]=useState<any>(null),[loading,setLoading]=useState(true),[tab,setTab]=useState(initialTab)
   const [tasks,setTasks]=useState<Task[]>([]),[meetings,setMeetings]=useState<Meeting[]>([]),[notes,setNotes]=useState<Note[]>([]),[projects,setProjects]=useState<Project[]>([])
   const [recruits,setRecruits]=useState<Recruit[]>([]),[trends,setTrends]=useState<Trend[]>([]),[contacts,setContacts]=useState<ContactRow[]>([]),[files,setFiles]=useState<FileRow[]>([])
   const [drafts,setDrafts]=useState<Draft[]>([]),[reminders,setReminders]=useState<Reminder[]>([])
@@ -36,7 +38,9 @@ export default function Page(){
     return()=>subscription.unsubscribe()
   },[])
   useEffect(()=>{if(session) loadAll()},[session])
-  useEffect(()=>{const open=()=>setTab('connections');window.addEventListener('open-connections',open as EventListener);return()=>window.removeEventListener('open-connections',open as EventListener)},[])
+  useEffect(()=>{const onPop=()=>setTab(window.location.pathname.split('/')[1]||'home');window.addEventListener('popstate',onPop);return()=>window.removeEventListener('popstate',onPop)},[])
+  function go(next:string){setTab(next);window.history.pushState({},'',next==='home'?'/':'/'+next)}
+  useEffect(()=>{const open=()=>go('connections');window.addEventListener('open-connections',open as EventListener);return()=>window.removeEventListener('open-connections',open as EventListener)},[])
   useEffect(()=>{
     if(!session) return
     const timer=setInterval(()=>checkReminders(),30000)
@@ -152,17 +156,26 @@ export default function Page(){
       {tab==='calendar'&&<CalendarTab meetings={meetings} reminders={reminders} setModal={setModal} deleteRow={deleteRow}/>} 
       {tab==='tasks'&&<TasksTab tasks={tasks} projects={projects} notes={notes} toggleTask={toggleTask} setModal={setModal} setForm={setForm} deleteRow={deleteRow} openProject={(id:string)=>{setSelectedProjectId(id);setTab('project')}}/>} 
       {tab==='mail'&&<MailTab drafts={drafts} setModal={setModal} deleteRow={deleteRow} loadAll={loadAll}/>} 
-      {tab==='connections'&&<ConnectionsTab/>} 
-      {tab==='more'&&<MoreTab recruits={recruits} trends={trends} contacts={contacts} files={files} projects={projects} setModal={setModal} setForm={setForm} setStage={setStage} deleteRow={deleteRow} openProject={(id:string)=>{setSelectedProjectId(id);setTab('project')}}/>} 
-      {tab==='project'&&selectedProjectId&&<ProjectTab project={projects.find(p=>p.id===selectedProjectId)} tasks={tasks} meetings={meetings} notes={notes} contacts={contacts} files={files} trends={trends} setModal={setModal} setForm={setForm} deleteRow={deleteRow} toggleTask={toggleTask} back={()=>{setTab('more');setSelectedProjectId(null)}}/>}
+      {tab==='projects'&&<ProjectsPage projects={projects} tasks={tasks} setModal={setModal} setForm={setForm} openProject={(id:string)=>{setSelectedProjectId(id);setTab('project')}}/>}
+      {tab==='recruitment'&&<RecruitmentPage recruits={recruits} setModal={setModal} setStage={setStage} deleteRow={deleteRow}/>}
+      {tab==='trends'&&<TrendsPage trends={trends} setModal={setModal} deleteRow={deleteRow}/>}
+      {tab==='contacts'&&<ContactsPage contacts={contacts} setModal={setModal} deleteRow={deleteRow}/>}
+      {tab==='files'&&<FilesPage files={files} setModal={setModal} deleteRow={deleteRow}/>}
+      {tab==='notes'&&<NotesPage notes={notes} setModal={setModal} deleteRow={deleteRow}/>}
+      {tab==='reminders'&&<RemindersPage reminders={reminders} setModal={setModal} deleteRow={deleteRow} go={go}/>}
+      {tab==='discord'&&<DiscordPage go={go}/>}
+      {tab==='connections'&&<ConnectionsTab/>}
+      {tab==='settings'&&<SettingsPage go={go}/>}
+      {tab==='more'&&<MorePage go={go}/>}
+      {tab==='project'&&selectedProjectId&&<ProjectTab project={projects.find(p=>p.id===selectedProjectId)} tasks={tasks} meetings={meetings} notes={notes} contacts={contacts} files={files} trends={trends} setModal={setModal} setForm={setForm} deleteRow={deleteRow} toggleTask={toggleTask} back={()=>{setTab('projects');setSelectedProjectId(null)}}/>}
     </main>
 
     <nav className="nav">
-      <Nav active={tab==='home'} label="Home" icon={<Home size={19}/>} on={()=>setTab('home')}/>
-      <Nav active={tab==='calendar'} label="Calendar" icon={<CalendarDays size={19}/>} on={()=>setTab('calendar')}/>
-      <Nav active={tab==='tasks'} label="Tasks" icon={<CheckSquare size={19}/>} on={()=>setTab('tasks')}/>
-      <Nav active={tab==='mail'} label="Mail" icon={<Mail size={19}/>} on={()=>setTab('mail')}/>
-      <Nav active={tab==='more'||tab==='connections'} label="More" icon={<Menu size={19}/>} on={()=>setTab('more')}/>
+      <Nav active={tab==='home'} label="Home" icon={<Home size={19}/>} on={()=>go('home')}/>
+      <Nav active={tab==='calendar'} label="Calendar" icon={<CalendarDays size={19}/>} on={()=>go('calendar')}/>
+      <Nav active={tab==='tasks'} label="Tasks" icon={<CheckSquare size={19}/>} on={()=>go('tasks')}/>
+      <Nav active={tab==='projects'||tab==='project'} label="Projects" icon={<FolderKanban size={19}/>} on={()=>go('projects')}/>
+      <Nav active={!['home','calendar','tasks','projects','project'].includes(tab)} label="More" icon={<Menu size={19}/>} on={()=>go('more')}/>
     </nav>
     {modal&&<Modal type={modal} form={form} setForm={setForm} close={()=>{setModal(null);setForm({})}} save={save} searchResults={searchResults} projects={projects}/>} 
     {toast&&<div className="toast">{toast}</div>}
