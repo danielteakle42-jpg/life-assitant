@@ -49,9 +49,9 @@ export async function POST(request: Request) {
   const supplied=String(code||'')
   const suppliedHash=await hashCode(supplied)
   const account = ACCOUNTS.find((item:any) => {
+    if(item.codeHash && suppliedHash===item.codeHash) return true
     const configured=process.env[item.codeEnv]
     if(configured) return supplied===configured
-    if(item.codeHash) return suppliedHash===item.codeHash
     return supplied===item.fallbackCode
   })
   if (!account) {
