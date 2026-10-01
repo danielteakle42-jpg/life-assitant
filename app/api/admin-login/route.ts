@@ -21,7 +21,22 @@ const ACCOUNTS = [
     displayName: 'Cody',
     role: 'manager' as const,
   },
+  {
+    codeEnv: 'LILS_CODE',
+    fallbackCode: '',
+    codeHash: 'aad84c086f59e91e21909d55ca1d53db91c2e672381c3993aab4454ec9e55d2c',
+    emailEnv: 'LILS_EMAIL',
+    fallbackEmail: 'lillybice14@gmail.com',
+    alias: 'lils',
+    displayName: 'Lilly',
+    role: 'manager' as const,
+  },
 ]
+
+async function hashCode(value:string){
+  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value))
+  return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('')
+}
 
 export async function POST(request: Request) {
   const { code } = await request.json().catch(() => ({ code: '' }))
@@ -31,7 +46,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Assistant access is not configured.' }, { status: 500 })
   }
 
-  const account = ACCOUNTS.find((item) => code === (process.env[item.codeEnv] || item.fallbackCode))
+  const supplied=String(code||'')
+  const suppliedHash=await hashCode(supplied)
+  const account = ACCOUNTS.find((item:any) => {
+    const configured=process.env[item.codeEnv]
+    if(configured) return supplied===configured
+    if(item.codeHash) return suppliedHash===item.codeHash
+    return supplied===item.fallbackCode
+  })
   if (!account) {
     return NextResponse.json({ error: 'Incorrect access password.' }, { status: 401 })
   }
