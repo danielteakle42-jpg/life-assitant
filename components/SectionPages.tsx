@@ -67,7 +67,7 @@ export function SettingsPage({go}:any){
 
 export function MorePage({go}:any){
   const groups:any[]=[
-    {title:'Work',items:[['mail','Mail',<Mail size={19}/>],['recruitment','Recruitment',<Users size={19}/>],['trends','Ideas',<TrendingUp size={19}/>]]},
+    {title:'Work',items:[['inbox','Smart Inbox',<Bell size={19}/>],['mail','Mail',<Mail size={19}/>],['recruitment','Recruitment',<Users size={19}/>],['trends','Ideas',<TrendingUp size={19}/>]]},
     {title:'Organise',items:[['notes','Notes',<StickyNote size={19}/>],['contacts','Contacts',<Contact size={19}/>],['files','Files',<FileText size={19}/>],['reminders','Reminders',<Bell size={19}/>]]},
     {title:'Connect',items:[['discord','Discord',<MessageCircle size={19}/>],['connections','Connections',<Link2 size={19}/>],['settings','Settings',<Target size={19}/>]]}
   ]
