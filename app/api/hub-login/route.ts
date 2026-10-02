@@ -12,5 +12,8 @@ export async function POST(request:Request){
  if(staff?.role!=='manager'&&existing?.role!=='owner'){await db.auth.signOut();return NextResponse.json({error:'Staff assistant access required.'},{status:403});}
  const {error:profileError}=await db.from('assistant_user_profiles').upsert({user_id:data.user.id,login_alias:staff?.username||'owner',display_name:staff?.display_name||'Owner',role:existing?.role==='owner'?'owner':'manager',updated_at:new Date().toISOString()},{onConflict:'user_id'});
  if(profileError)return NextResponse.json({error:'Could not prepare assistant account.'},{status:500});
- const response=NextResponse.redirect(new URL('/',request.url),303);response.headers.set('Cache-Control','no-store');response.cookies.set('pp_admin',await adminToken(secret),{httpOnly:true,secure:true,sameSite:'lax',path:'/',maxAge:60*60*24*14});return response;
+ const provider=String(form.get('provider')||'');
+ const destination=['google','lark'].includes(provider)?`/api/integrations/${provider}/connect`:'/';
+ const response=NextResponse.redirect(new URL(destination,request.url),303);
+ if(provider)response.cookies.set('assistant_hub_return','1',{httpOnly:true,secure:true,sameSite:'lax',path:'/',maxAge:600});response.headers.set('Cache-Control','no-store');response.cookies.set('pp_admin',await adminToken(secret),{httpOnly:true,secure:true,sameSite:'lax',path:'/',maxAge:60*60*24*14});return response;
 }

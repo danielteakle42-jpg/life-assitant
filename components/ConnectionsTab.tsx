@@ -33,7 +33,7 @@ export default function ConnectionsTab(){
       await fetch('/api/integrations/push',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({permission})})
       if(permission!=='granted'){setMsg('Notification permission was not granted.');load();return}
       const reg=await navigator.serviceWorker.ready
-      await reg.showNotification('Platinum Assistant',{body:'Notifications are working on this device.',tag:'platinum-test',renotify:true})
+      await reg.showNotification('Platinum Assistant',{body:'Notifications are working on this device.',tag:'platinum-test'})
       setMsg('Notifications enabled — test notification sent.')
       load()
     }catch(error:any){setMsg(error?.message||'Could not enable notifications.')}
@@ -41,7 +41,7 @@ export default function ConnectionsTab(){
   async function testPush(){
     try{
       const reg=await navigator.serviceWorker.ready
-      await reg.showNotification('Platinum Assistant',{body:'Test notification — your browser alerts are working.',tag:'platinum-test',renotify:true})
+      await reg.showNotification('Platinum Assistant',{body:'Test notification — your browser alerts are working.',tag:'platinum-test'})
       setMsg('Test notification sent.')
     }catch(error:any){setMsg(error?.message||'Test notification failed.')}
   }

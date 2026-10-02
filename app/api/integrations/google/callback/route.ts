@@ -5,6 +5,9 @@ import { encryptSecret } from '../../../../../lib/token-crypto'
 
 export async function GET(request: Request) {
   const origin = requestOrigin(request)
+  const hubReturn=(await cookies()).get('assistant_hub_return')?.value==='1'
+  const destination=hubReturn?'https://managment-dash.vercel.app/?view=assistant&assistantTab=connections&':`${origin}/?`
+  if(hubReturn)(await cookies()).delete('assistant_hub_return')
   const url = new URL(request.url)
   try {
     const { db, user } = await requireUser()
@@ -48,8 +51,8 @@ export async function GET(request: Request) {
       updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id,provider' })
     if (error) throw error
-    return NextResponse.redirect(`${origin}/?connected=google`)
+    return NextResponse.redirect(`${destination}connected=google`)
   } catch (error: any) {
-    return NextResponse.redirect(`${origin}/?connection_error=${encodeURIComponent(error?.message || 'Google connection failed')}`)
+    return NextResponse.redirect(`${destination}connection_error=${encodeURIComponent(error?.message || 'Google connection failed')}`)
   }
 }

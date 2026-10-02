@@ -61,7 +61,9 @@ export async function POST(request: Request) {
   const email = process.env[account.emailEnv] || account.fallbackEmail
   const db = await supabaseServer()
 
-  let { data, error } = await db.auth.signInWithPassword({ email, password: code })
+  const login = await db.auth.signInWithPassword({ email, password: code })
+  let data: {user: import('@supabase/supabase-js').User | null;session: import('@supabase/supabase-js').Session | null} = login.data
+  const error = login.error
 
   // First-use bootstrap: create the hidden Supabase identity if it does not exist yet.
   // If email confirmation is enabled in Supabase, the user must confirm the email once.

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminToken } from './lib/admin-auth'
+import {createClient} from '@supabase/supabase-js'
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -7,6 +8,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next()
   }
 
+  if(pathname.startsWith('/api/integrations/') && request.headers.has('authorization')){const token=request.headers.get('authorization')?.replace(/^Bearer\s+/i,'').trim();const db=createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,{auth:{persistSession:false,autoRefreshToken:false}});const {data,error}=await db.auth.getUser(token);if(error||!data.user)return NextResponse.json({error:'UNAUTHENTICATED'},{status:401});return NextResponse.next();}
   const secret = process.env.ADMIN_SESSION_SECRET
   if (!secret) return NextResponse.redirect(new URL('/admin', request.url))
 

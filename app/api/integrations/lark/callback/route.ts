@@ -6,6 +6,9 @@ import { LARK_BASE } from '../../../../../lib/lark'
 
 export async function GET(request: Request) {
   const origin=requestOrigin(request)
+  const hubReturn=(await cookies()).get('assistant_hub_return')?.value==='1'
+  const destination=hubReturn?'https://managment-dash.vercel.app/?view=assistant&assistantTab=connections&':`${origin}/?`
+  if(hubReturn)(await cookies()).delete('assistant_hub_return')
   const url=new URL(request.url)
   try{
     const {db,user}=await requireUser()
@@ -19,6 +22,6 @@ export async function GET(request: Request) {
     const infoRaw=await infoRes.json(); const info=infoRaw.data||infoRaw
     const {error}=await db.from('assistant_integrations').upsert({user_id:user.id,provider:'lark',status:'connected',account_label:info.name||info.en_name||info.email||'Lark account',encrypted_access_token:await encryptSecret(token.access_token),encrypted_refresh_token:await encryptSecret(token.refresh_token),token_expires_at:new Date(Date.now()+Number(token.expires_in||7200)*1000).toISOString(),scopes:token.scope?String(token.scope).split(' '):[],metadata:{open_id:info.open_id||null,user_id:info.user_id||null,avatar_url:info.avatar_url||null},updated_at:new Date().toISOString()},{onConflict:'user_id,provider'})
     if(error) throw error
-    return NextResponse.redirect(`${origin}/?connected=lark`)
-  }catch(error:any){return NextResponse.redirect(`${origin}/?connection_error=${encodeURIComponent(error?.message||'Lark connection failed')}`)}
+    return NextResponse.redirect(`${destination}connected=lark`)
+  }catch(error:any){return NextResponse.redirect(`${destination}connection_error=${encodeURIComponent(error?.message||'Lark connection failed')}`)}
 }
