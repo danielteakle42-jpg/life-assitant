@@ -3,7 +3,7 @@ import { adminToken } from './lib/admin-auth'
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
-  if (pathname === '/admin' || pathname.startsWith('/api/admin-login') || pathname.startsWith('/_next') || pathname === '/favicon.ico') {
+  if (pathname === '/api/hub-login' || pathname === '/admin' || pathname.startsWith('/api/admin-login') || pathname.startsWith('/_next') || pathname === '/favicon.ico') {
     return NextResponse.next()
   }
 
