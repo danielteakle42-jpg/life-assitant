@@ -24,7 +24,7 @@ type Reminder={id:string;title:string;remind_at:string;channel:string;sent_at:st
 
 const db=supabase()
 export default function Page(){
-  const initialTab='home'
+  const initialTab=typeof window!=='undefined'?(window.location.pathname.split('/')[1]||'home'):'home'
   const [session,setSession]=useState<any>(null),[loading,setLoading]=useState(true),[tab,setTab]=useState(initialTab)
   const [tasks,setTasks]=useState<Task[]>([]),[meetings,setMeetings]=useState<Meeting[]>([]),[notes,setNotes]=useState<Note[]>([]),[projects,setProjects]=useState<Project[]>([])
   const [recruits,setRecruits]=useState<Recruit[]>([]),[trends,setTrends]=useState<Trend[]>([]),[contacts,setContacts]=useState<ContactRow[]>([]),[files,setFiles]=useState<FileRow[]>([])
@@ -33,7 +33,6 @@ export default function Page(){
   const [selectedProjectId,setSelectedProjectId]=useState<string|null>(null)
 
   useEffect(()=>{
-    setTab(window.location.pathname.split('/')[1]||'home')
     db.auth.getSession().then(({data})=>{setSession(data.session);setLoading(false)})
     const {data:{subscription}}=db.auth.onAuthStateChange((_e,s)=>setSession(s))
     return()=>subscription.unsubscribe()
@@ -62,25 +61,22 @@ export default function Page(){
       db.from('assistant_email_drafts').select('*').order('created_at',{ascending:false}),
       db.from('assistant_reminders').select('*').order('remind_at')
     ])
-    const failure=[a,b,c,d,e,f,g,h,i,j].find(result=>result.error)
-    if(failure?.error)showToast('Unable to load some data: '+failure.error.message)
     setTasks(a.data||[]);setMeetings(b.data||[]);setNotes(c.data||[]);setProjects(d.data||[]);setRecruits(e.data||[]);setTrends(f.data||[])
     setContacts(g.data||[]);setFiles(h.data||[]);setDrafts(i.data||[]);setReminders(j.data||[])
   }
 
   async function addQuick(){
     if(!quick.trim()||!session)return
-    const {error}=await db.from('assistant_tasks').insert({user_id:session.user.id,title:quick.trim(),difficulty:1,priority:3})
-    if(error){showToast(error.message);return}
+    await db.from('assistant_tasks').insert({user_id:session.user.id,title:quick.trim(),difficulty:1,priority:3})
     setQuick('');showToast('Task added');loadAll()
   }
-  async function toggleTask(t:Task){const {error}=await db.from('assistant_tasks').update({status:t.status==='done'?'todo':'done'}).eq('id',t.id);if(error){showToast(error.message);return}loadAll()}
+  async function toggleTask(t:Task){await db.from('assistant_tasks').update({status:t.status==='done'?'todo':'done'}).eq('id',t.id);loadAll()}
   async function setStage(r:Recruit,stage:string){await db.from('assistant_recruitment').update({stage}).eq('id',r.id);loadAll()}
   async function deleteRow(table:string,id:string){if(!confirm('Delete this item?'))return;await db.from(table).delete().eq('id',id);loadAll()}
   function showToast(msg:string){setToast(msg);setTimeout(()=>setToast(''),2200)}
 
   async function checkReminders(){
-    if(typeof window==='undefined'||!('Notification' in window)||Notification.permission!=='granted')return
+    if(typeof window==='undefined'||Notification.permission!=='granted')return
     const now=Date.now()
     const due=reminders.filter(r=>!r.sent_at&&new Date(r.remind_at).getTime()<=now)
     for(const r of due){
@@ -147,14 +143,6 @@ export default function Page(){
   if(!session){if(typeof window!=='undefined')window.location.href='/admin';return <div className="auth"><div className="card loginCard"><div className="adminIcon"><Sparkles size={26}/></div><h1>Platinum Assistant</h1><p className="muted">Opening secure login…</p></div></div>}
 
   return <>
-    <aside className="sidebar">
-      <div className="sideBrand"><div className="sideLogo"><Sparkles size={22}/></div><div><b>Platinum</b><span>Personal assistant</span></div></div>
-      <div className="sideLabel">YOUR WORKSPACE</div>
-      <nav aria-label="Workspace navigation">
-        {[['home','Overview',Home],['inbox','Inbox',Bell],['tasks','Tasks',CheckSquare],['calendar','Calendar',CalendarDays],['projects','Projects',FolderKanban],['mail','Mail',Mail],['notes','Notes',StickyNote],['recruitment','Recruitment',Users],['contacts','Contacts',Contact],['reminders','Reminders',Clock3],['files','Files',FileText],['trends','Trends',TrendingUp],['discord','Discord',Send],['connections','Connections',Link2],['settings','Settings',Target]].map(([key,label,Icon]:any)=><button key={key} className={tab===key||(key==='projects'&&tab==='project')?'selected':''} onClick={()=>go(key)} aria-current={tab===key?'page':undefined}><Icon size={18}/><span>{label}</span>{key==='inbox'&&overdue.length>0&&<small>{overdue.length}</small>}</button>)}
-      </nav>
-      <div className="sideFooter"><span className="statusDot"/> Your personal workspace</div>
-    </aside>
     <main className="wrap">
       <header className="top">
         <div className="brand"><div className="eyebrow">PERSONAL HQ</div><h1>Platinum Assistant</h1><p>Run your day, agency and projects from one place.</p></div>

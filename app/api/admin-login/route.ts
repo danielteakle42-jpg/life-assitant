@@ -6,7 +6,6 @@ const ACCOUNTS = [
   {
     codeEnv: 'OWNER_CODE',
     fallbackCode: 'ppn777',
-    entryPasswordEnv: 'ADMIN_ACCESS_PASSWORD',
     emailEnv: 'OWNER_EMAIL',
     fallbackEmail: 'danielteakle42@gmail.com',
     alias: 'ppn777',
@@ -50,14 +49,10 @@ export async function POST(request: Request) {
   const supplied=String(code||'')
   const suppliedHash=await hashCode(supplied)
   const account = ACCOUNTS.find((item:any) => {
-    if(item.role === 'owner') {
-      const password = process.env[item.entryPasswordEnv] || process.env[item.codeEnv] || item.fallbackCode
-      return Boolean(password) && supplied === password
-    }
     if(item.codeHash && suppliedHash===item.codeHash) return true
     const configured=process.env[item.codeEnv]
     if(configured) return supplied===configured
-    return Boolean(item.fallbackCode) && supplied===item.fallbackCode
+    return supplied===item.fallbackCode
   })
   if (!account) {
     return NextResponse.json({ error: 'Incorrect access password.' }, { status: 401 })
@@ -66,11 +61,7 @@ export async function POST(request: Request) {
   const email = process.env[account.emailEnv] || account.fallbackEmail
   const db = await supabaseServer()
 
-  // Keep the existing identity and records when the owner changes their entry password.
-  const identityPassword = account.role === 'owner'
-    ? (process.env[account.codeEnv] || account.fallbackCode)
-    : supplied
-  const login = await db.auth.signInWithPassword({ email, password: identityPassword })
+  const login = await db.auth.signInWithPassword({ email, password: code })
   let data: {user: import('@supabase/supabase-js').User | null;session: import('@supabase/supabase-js').Session | null} = login.data
   const error = login.error
 
@@ -79,7 +70,7 @@ export async function POST(request: Request) {
   if (error) {
     const signup = await db.auth.signUp({
       email,
-      password: identityPassword,
+      password: code,
       options: {
         data: { assistant_role: account.role, assistant_alias: account.alias },
       },
