@@ -10,7 +10,7 @@ export default function ConnectionsTab(){
   async function load(){setLoading(true);const r=await fetch('/api/integrations/status',{cache:'no-store'});const j=await r.json();setItems(j.integrations||[]);setLoading(false)}
   useEffect(()=>{load()},[])
   async function disconnect(provider:string){await fetch('/api/integrations/disconnect',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({provider})});setDrive([]);setLarkCalendars([]);setMsg(`${provider} disconnected`);load()}
-  async function connectDiscord(){setMsg('');const r=await fetch('/api/integrations/discord',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({webhook_url:discordUrl,label:'Platinum Assistant'})});const j=await r.json();setMsg(r.ok?'Discord connected and test message sent.':j.error||'Discord connection failed');if(r.ok){setDiscordUrl('');load()}}
+  async function connectDiscord(){setMsg('');const r=await fetch('/api/integrations/discord',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({webhook_url:discordUrl,label:'Scotty Assistant'})});const j=await r.json();setMsg(r.ok?'Discord connected and test message sent.':j.error||'Discord connection failed');if(r.ok){setDiscordUrl('');load()}}
   async function sendDiscordAnnouncement(){
     const message=discordMessage.trim()
     if(!message){setMsg('Write an announcement first.');return}
@@ -33,7 +33,7 @@ export default function ConnectionsTab(){
       await fetch('/api/integrations/push',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({permission})})
       if(permission!=='granted'){setMsg('Notification permission was not granted.');load();return}
       const reg=await navigator.serviceWorker.ready
-      await reg.showNotification('Platinum Assistant',{body:'Notifications are working on this device.',tag:'platinum-test'})
+      await reg.showNotification('Scotty Assistant',{body:'Notifications are working on this device.',tag:'platinum-test'})
       setMsg('Notifications enabled — test notification sent.')
       load()
     }catch(error:any){setMsg(error?.message||'Could not enable notifications.')}
@@ -41,7 +41,7 @@ export default function ConnectionsTab(){
   async function testPush(){
     try{
       const reg=await navigator.serviceWorker.ready
-      await reg.showNotification('Platinum Assistant',{body:'Test notification — your browser alerts are working.',tag:'platinum-test'})
+      await reg.showNotification('Scotty Assistant',{body:'Test notification — your browser alerts are working.',tag:'platinum-test'})
       setMsg('Test notification sent.')
     }catch(error:any){setMsg(error?.message||'Test notification failed.')}
   }

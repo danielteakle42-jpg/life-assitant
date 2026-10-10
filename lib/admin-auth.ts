@@ -14,6 +14,6 @@ export async function adminToken(secret: string) {
     false,
     ['sign']
   )
-  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode('platinum-assistant-admin'))
+  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode('scotty-assistant-admin'))
   return base64url(new Uint8Array(signature))
 }

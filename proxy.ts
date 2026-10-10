@@ -13,7 +13,7 @@ export async function proxy(request: NextRequest) {
   if (!secret) return NextResponse.redirect(new URL('/admin', request.url))
 
   const expected = await adminToken(secret)
-  const current = request.cookies.get('pp_admin')?.value
+  const current = request.cookies.get('scotty_admin')?.value
   if (current !== expected) return NextResponse.redirect(new URL('/admin', request.url))
 
   return NextResponse.next()

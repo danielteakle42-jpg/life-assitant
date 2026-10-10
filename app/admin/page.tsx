@@ -20,7 +20,7 @@ export default function AdminLogin(){
 
   return <div className="auth"><div className="card adminGate">
     <div className="adminIcon"><LockKeyhole size={26}/></div>
-    <div className="eyebrow">YOUR PERSONAL WORKSPACE</div><h1>Welcome back.</h1>
+    <div className="eyebrow">SCOTTY ASSISTANT</div><h1>Welcome back.</h1>
     <p className="muted">Everything you’re building, in one place.</p>
     <form className="stack" onSubmit={submit}>
       <input className="input" type="password" required autoComplete="current-password" aria-label="Access password" autoFocus placeholder="Access password" value={code} onChange={e=>setCode(e.target.value)} />

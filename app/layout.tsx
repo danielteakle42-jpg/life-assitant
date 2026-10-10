@@ -2,9 +2,9 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Platinum Assistant',
-  description: 'Personal operations dashboard',
-  applicationName: 'Platinum Assistant',
+  title: 'Scotty Assistant',
+  description: 'Scotty’s personal workspace for projects, tasks, meetings and connections',
+  applicationName: 'Scotty Assistant',
 }
 
 export const viewport: Viewport = {

@@ -84,7 +84,7 @@ export default function Page(){
     const now=Date.now()
     const due=reminders.filter(r=>!r.sent_at&&new Date(r.remind_at).getTime()<=now)
     for(const r of due){
-      new Notification('Platinum Assistant',{body:r.title})
+      new Notification('Scotty Assistant',{body:r.title})
       await db.from('assistant_reminders').update({sent_at:new Date().toISOString()}).eq('id',r.id)
     }
     if(due.length) loadAll()
@@ -144,11 +144,11 @@ export default function Page(){
   },[query,tasks,meetings,notes,projects,recruits,contacts,trends])
 
   if(loading)return <div className="auth"><div className="card">Loading…</div></div>
-  if(!session){if(typeof window!=='undefined')window.location.href='/admin';return <div className="auth"><div className="card loginCard"><div className="adminIcon"><Sparkles size={26}/></div><h1>Platinum Assistant</h1><p className="muted">Opening secure login…</p></div></div>}
+  if(!session){if(typeof window!=='undefined')window.location.href='/admin';return <div className="auth"><div className="card loginCard"><div className="adminIcon"><Sparkles size={26}/></div><h1>Scotty Assistant</h1><p className="muted">Opening secure login…</p></div></div>}
 
   return <>
     <aside className="sidebar">
-      <div className="sideBrand"><div className="sideLogo"><Sparkles size={22}/></div><div><b>Platinum</b><span>Personal assistant</span></div></div>
+      <div className="sideBrand"><div className="sideLogo"><Sparkles size={22}/></div><div><b>Scotty</b><span>Personal assistant</span></div></div>
       <div className="sideLabel">YOUR WORKSPACE</div>
       <nav aria-label="Workspace navigation">
         {[['home','Overview',Home],['inbox','Inbox',Bell],['tasks','Tasks',CheckSquare],['calendar','Calendar',CalendarDays],['projects','Projects',FolderKanban],['mail','Mail',Mail],['notes','Notes',StickyNote],['recruitment','Recruitment',Users],['contacts','Contacts',Contact],['reminders','Reminders',Clock3],['files','Files',FileText],['trends','Trends',TrendingUp],['discord','Discord',Send],['connections','Connections',Link2],['settings','Settings',Target]].map(([key,label,Icon]:any)=><button key={key} className={tab===key||(key==='projects'&&tab==='project')?'selected':''} onClick={()=>go(key)} aria-current={tab===key?'page':undefined}><Icon size={18}/><span>{label}</span>{key==='inbox'&&overdue.length>0&&<small>{overdue.length}</small>}</button>)}
@@ -157,7 +157,7 @@ export default function Page(){
     </aside>
     <main className="wrap">
       <header className="top">
-        <div className="brand"><div className="eyebrow">PERSONAL HQ</div><h1>Platinum Assistant</h1><p>Run your day, agency and projects from one place.</p></div>
+        <div className="brand"><div className="eyebrow">PERSONAL HQ</div><h1>Scotty Assistant</h1><p>Run your day, agency and projects from one place.</p></div>
         <div className="row"><button className="iconBtn hideMobile" onClick={()=>setModal('search')} title="Search"><Search size={18}/></button><button className="iconBtn" onClick={async()=>{await db.auth.signOut();await fetch('/api/admin-logout',{method:'POST'});window.location.href='/admin'}} title="Log out"><LogOut size={18}/></button></div>
       </header>
 
@@ -311,7 +311,7 @@ function HubCard({icon,title,count,action,children}:{icon:React.ReactNode,title:
 function Modal({type,form,setForm,close,save,searchResults,projects}:{type:string,form:any,setForm:(v:any)=>void,close:()=>void,save:()=>void,searchResults:any[],projects:Project[]}){
   const field=(k:string,p:string,t='text')=><input className="input" type={t} placeholder={p} value={form[k]||''} onChange={e=>setForm({...form,[k]:e.target.value})}/>
   const projectSelect=<select className="select" value={form.project_id||''} onChange={e=>setForm({...form,project_id:e.target.value||null})}><option value="">General / no project</option>{projects.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select>
-  return <div className="modal"><div className="card modalCard"><div className="row between"><div><div className="eyebrow">PLATINUM ASSISTANT</div><h2>{type==='search'?'Search results':`Add ${type}`}</h2></div><button className="iconBtn" onClick={close}><X size={18}/></button></div><div className="stack modalBody">
+  return <div className="modal"><div className="card modalCard"><div className="row between"><div><div className="eyebrow">SCOTTY ASSISTANT</div><h2>{type==='search'?'Search results':`Add ${type}`}</h2></div><button className="iconBtn" onClick={close}><X size={18}/></button></div><div className="stack modalBody">
     {type==='task'&&<>{field('title','Task title')}{field('notes','Notes')}{field('due_at','Due date/time','datetime-local')}<div className="twoCols">{field('priority','Priority 1-5','number')}{field('difficulty','Difficulty 1-5','number')}</div>{projectSelect}</>}
     {type==='meeting'&&<>{field('title','Meeting title')}{projectSelect}<div className="twoCols">{field('starts_at','Start','datetime-local')}{field('ends_at','End','datetime-local')}</div>{field('location','Location')}{field('join_url','Meeting / Lark / Zoom link')}{field('notes','Notes')}</>}
     {type==='reminder'&&<>{field('title','What should I remind you about?')}{field('remind_at','Reminder date/time','datetime-local')}<select className="select" value={form.channel||'push'} onChange={e=>setForm({...form,channel:e.target.value})}><option value="push">Phone/browser notification</option><option value="lark">Lark (when connected)</option><option value="email">Email (when connected)</option></select></>}

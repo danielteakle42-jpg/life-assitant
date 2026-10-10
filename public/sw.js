@@ -15,7 +15,7 @@ self.addEventListener('push', event => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch {}
   event.waitUntil(
-    self.registration.showNotification(data.title || 'Platinum Assistant', {
+    self.registration.showNotification(data.title || 'Scotty Assistant', {
       body: data.body || 'You have an assistant notification.',
       data: { url: data.url || '/' },
       tag: data.tag || 'platinum-assistant',

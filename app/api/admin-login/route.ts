@@ -2,42 +2,6 @@ import { NextResponse } from 'next/server'
 import { adminToken } from '../../../lib/admin-auth'
 import { supabaseServer } from '../../../lib/supabase-server'
 
-const ACCOUNTS = [
-  {
-    codeEnv: 'OWNER_CODE',
-    fallbackCode: 'ppn777',
-    entryPasswordEnv: 'ADMIN_ACCESS_PASSWORD',
-    emailEnv: 'OWNER_EMAIL',
-    fallbackEmail: 'danielteakle42@gmail.com',
-    alias: 'ppn777',
-    displayName: 'Owner',
-    role: 'owner' as const,
-  },
-  {
-    codeEnv: 'MANAGER_CODE',
-    fallbackCode: 'cody789',
-    emailEnv: 'MANAGER_EMAIL',
-    fallbackEmail: 'codynoonan06@gmail.com',
-    alias: 'cody789',
-    displayName: 'Cody',
-    role: 'manager' as const,
-  },
-  {
-    codeEnv: 'LILS_CODE',
-    fallbackCode: '',
-    codeHash: 'aad84c086f59e91e21909d55ca1d53db91c2e672381c3993aab4454ec9e55d2c',
-    emailEnv: 'LILS_EMAIL',
-    fallbackEmail: 'lillybice14@gmail.com',
-    alias: 'lils',
-    displayName: 'Lilly',
-    role: 'manager' as const,
-  },
-]
-
-async function hashCode(value:string){
-  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value))
-  return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('')
-}
 
 export async function POST(request: Request) {
   const { code } = await request.json().catch(() => ({ code: '' }))
@@ -47,22 +11,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Assistant access is not configured.' }, { status: 500 })
   }
 
-  const supplied=String(code||'')
-  const suppliedHash=await hashCode(supplied)
-  const account = ACCOUNTS.find((item:any) => {
-    if(item.role === 'owner') {
-      const password = process.env[item.entryPasswordEnv] || process.env[item.codeEnv] || item.fallbackCode
-      return Boolean(password) && supplied === password
-    }
-    if(item.codeHash && suppliedHash===item.codeHash) return true
-    const configured=process.env[item.codeEnv]
-    if(configured) return supplied===configured
-    return Boolean(item.fallbackCode) && supplied===item.fallbackCode
-  })
-  if (!account) {
-    return NextResponse.json({ error: 'Incorrect access password.' }, { status: 401 })
+  const supplied = String(code || '')
+  const entryPassword = process.env.ADMIN_ACCESS_PASSWORD
+  if (!entryPassword) return NextResponse.json({error:'Scotty login is not configured yet.'},{status:503})
+  if (!supplied || supplied !== entryPassword) return NextResponse.json({error:'Incorrect access password.'},{status:401})
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) {
+    return NextResponse.json({error:'Scotty’s database settings still need to be copied in Vercel.'},{status:503})
   }
-
+  const account = { emailEnv:'OWNER_EMAIL', fallbackEmail:'danielteakle42@gmail.com', codeEnv:'OWNER_CODE', fallbackCode:'ppn777', alias:'scotty', displayName:'Scotty', role:'owner' as const }
   const email = process.env[account.emailEnv] || account.fallbackEmail
   const db = await supabaseServer()
 
@@ -113,7 +69,7 @@ export async function POST(request: Request) {
 
   const token = await adminToken(secret)
   const response = NextResponse.json({ ok: true, role: account.role, alias: account.alias })
-  response.cookies.set('pp_admin', token, {
+  response.cookies.set('scotty_admin', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
