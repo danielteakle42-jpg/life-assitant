@@ -6,7 +6,7 @@ const ACCOUNTS = [
   {
     codeEnv: 'OWNER_CODE',
     fallbackCode: 'ppn777',
-    codeHash: 'a44a03e84c9e0ce080d1599e3e52a86a32a23b9a0cd7096cacf5006740fa358a',
+    entryPasswordEnv: 'ADMIN_ACCESS_PASSWORD',
     emailEnv: 'OWNER_EMAIL',
     fallbackEmail: 'danielteakle42@gmail.com',
     alias: 'ppn777',
@@ -50,7 +50,10 @@ export async function POST(request: Request) {
   const supplied=String(code||'')
   const suppliedHash=await hashCode(supplied)
   const account = ACCOUNTS.find((item:any) => {
-    if(item.role === 'owner' && item.codeHash) return suppliedHash===item.codeHash
+    if(item.role === 'owner') {
+      const password = process.env[item.entryPasswordEnv] || process.env[item.codeEnv] || item.fallbackCode
+      return Boolean(password) && supplied === password
+    }
     if(item.codeHash && suppliedHash===item.codeHash) return true
     const configured=process.env[item.codeEnv]
     if(configured) return supplied===configured
